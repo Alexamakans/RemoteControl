@@ -9,5 +9,7 @@ const (
 	ToggleMute = "Failed toggling mute."
 	GetMuted   = "Failed getting muted state."
 
+	GetName = "Failed getting host name."
+
 	NotImplementedYet = "Feature not implemented yet."
 )

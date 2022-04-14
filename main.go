@@ -4,6 +4,7 @@ import (
 	"errors"
 	"math"
 	"net/http"
+	"os"
 
 	"github.com/Alexamakans/RemoteControl/failuremessage"
 	"github.com/Alexamakans/RemoteControl/keycode"
@@ -24,6 +25,7 @@ func main() {
 	api := engine.Group("/api")
 	{
 		api.POST("key", onKeyHandler)
+		api.GET("name", onNameHandler)
 	}
 
 	if err := engine.Run("0.0.0.0:6969"); err != nil {
@@ -122,19 +124,35 @@ func onKeyHandler(c *gin.Context) {
 }
 
 type errorResponse struct {
-	err     string
-	message string
+	Err     string `json:"err"`
+	Message string `json:"message"`
 }
 
 func respondJSONError(c *gin.Context, code int, err error, message string) {
 	errResp := newErrorResponse(err, message)
-	log.Warn().WithInt("code", code).WithString("err", errResp.err).WithString("message", errResp.message).Message("Error.")
+	log.Warn().WithInt("code", code).WithString("err", errResp.Err).WithString("message", errResp.Message).Message("Error.")
 	c.JSON(code, errResp)
 }
 
 func newErrorResponse(err error, message string) errorResponse {
 	return errorResponse{
-		err:     err.Error(),
-		message: message,
+		Err:     err.Error(),
+		Message: message,
 	}
+}
+
+type nameResponse struct {
+	Name string `json:"name"`
+}
+
+func onNameHandler(c *gin.Context) {
+	name, err := os.Hostname()
+	if err != nil {
+		respondJSONError(c, http.StatusInternalServerError, err, failuremessage.GetName)
+		return
+	}
+
+	c.JSON(http.StatusOK, nameResponse{
+		Name: name,
+	})
 }
